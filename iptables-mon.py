@@ -35,18 +35,18 @@ def get_counters(chain, rule_index):
 
     return None, None, None
 
-def human_readable_bytes_per_sec(bytes_per_sec):
-    units = ['bps', 'kbps', 'mbps', 'gbps']
+def human_readable_number(num, suffix=""):
+    units = ['', 'K', 'M', 'G']
     units_len = len(units)
-    size = bytes_per_sec
     unit_index = 0
+    size = num
 
     while size >= 1024 and unit_index < units_len - 1:
         size /= 1024
         unit_index += 1
 
     # Format with 2 decimal places
-    return f"{size:.2f} {units[unit_index]}"
+    return f"{size:.2f} {units[unit_index]}{suffix}"
 
 def main(stdscr, args, rule_command):
     # Clear and setup screen
@@ -57,7 +57,7 @@ def main(stdscr, args, rule_command):
     stdscr.addstr(0, 0, f"Monitoring chain '{args.chain}', rule index {args.number}, refresh rate {args.refresh}s")
     stdscr.addstr(1, 0, f"Rule command: {rule_command}")
     display_row = "Throughput: "
-    stdscr.addstr(3, 0, f"{display_row}")
+    # stdscr.addstr(3, 0, f"{display_row}")
     row = 3
 
     initial_packets, initial_bytes, _ = get_counters(args.chain, args.number)
@@ -67,24 +67,32 @@ def main(stdscr, args, rule_command):
         time.sleep(2)
         return
 
+    # start from 0 for this measurement sessions
+    total_bytes = 0
+
     try:
         while True: 
             packets, bytes_count, _ = get_counters(args.chain, args.number)
             if bytes_count is None:
                 continue
 
-            # Convert bytes difference to bits
+            # Calculate bytes difference
             bytes_diff = bytes_count - initial_bytes
-            bits_per_sec = (bytes_diff * 8) / args.refresh
-            human_readable = human_readable_bytes_per_sec(bits_per_sec)
 
-            # overwrite previous value
-            stdscr.addstr(row, len(display_row), f"{human_readable}   ")
+            # Update total bytes
+            total_bytes += bytes_diff
+            human_readable_tot_amount = human_readable_number(total_bytes, "B")
+
+            # Convert bytes difference to bits/sec
+            bits_per_sec = (bytes_diff * 8) / args.refresh
+            human_readable_throughput = human_readable_number(bits_per_sec, "bps")
+
+            # Display throughput and total bytes
+            stdscr.addstr(row, 0, f"{display_row}{human_readable_throughput}   |   Total Bytes: {human_readable_tot_amount}    ")
             stdscr.refresh()
 
-            # Update for next iteration
+            # Update initial_bytes for next iteration
             initial_bytes = bytes_count
-            initial_packets = packets
 
             time.sleep(args.refresh)
     except KeyboardInterrupt:
