@@ -100,6 +100,11 @@ if __name__ == "__main__":
                         help='Refresh interval in seconds.')
     args = parser.parse_args()
 
+    # Validate refresh interval
+    if args.refresh <= 0:
+        print("Error: Refresh interval must be greater than zero.")
+        sys.exit(1)
+
     # Verify that rule number is valid before starting curses
     rules = get_rules_with_counters(args.chain)
     if not rules:
