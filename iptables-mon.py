@@ -56,7 +56,8 @@ def main(stdscr, args, rule_command):
 
     stdscr.addstr(0, 0, f"Monitoring chain '{args.chain}', rule index {args.number}, refresh rate {args.refresh}s")
     stdscr.addstr(1, 0, f"Rule command: {rule_command}")
-    stdscr.addstr(3, 0, "Throughput: ")
+    display_row = "Throughput: "
+    stdscr.addstr(3, 0, f"{display_row}")
     row = 3
 
     initial_packets, initial_bytes, _ = get_counters(args.chain, args.number)
@@ -78,7 +79,7 @@ def main(stdscr, args, rule_command):
             human_readable = human_readable_bytes_per_sec(bits_per_sec)
 
             # overwrite previous value
-            stdscr.addstr(row, 12, f"{human_readable}   ")
+            stdscr.addstr(row, len(display_row), f"{human_readable}   ")
             stdscr.refresh()
 
             # Update for next iteration
